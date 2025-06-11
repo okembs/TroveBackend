@@ -1,0 +1,128 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+ // output   = "../generated/prisma"
+
+}
+
+datasource db {
+  provider = "mongodb"
+  url = env("DATABASE_URL")
+
+}
+// the user model
+model User {
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  email         String        @unique
+  username      String        @unique
+  password      String
+  stateofOrigin String
+  Adress        String
+  Country       String
+  faculty       String
+  university    String      @default("Esut")
+  department    String
+  role          String        @default("user")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  listing       Listing[] //for the user products lising 
+  orders        Order[] // for the users order 
+  transactions  Transaction[]
+  products      Product[] // to map the user product 
+  Cart          Cart?
+}
+
+// for the product id 
+model Product {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  description  String?
+  price        Float
+  category     String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  listings     Listing[] // for the listing 
+  transactions Transaction[] // for the transactions
+
+  User     User?      @relation(fields: [userId], references: [id])
+  userId   String?    @db.ObjectId
+  CartItem CartItem[]
+}
+
+// the listing model 
+model Listing {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  productId String   @db.ObjectId
+  sellerId  String   @db.ObjectId
+  quantity  Int      @default(1) // number of items 
+  status    String   @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  products  Product  @relation(fields: [productId], references: [id])
+  seller    User     @relation(fields: [sellerId], references: [id])
+
+  Order Order[]
+}
+
+//thr order model 
+model Order {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  prodcutId   String       @db.ObjectId
+  sellerId    String       @db.ObjectId
+  listingId   String       @db.ObjectId
+  buyerId     String       @db.ObjectId
+  quantity    Int          @default(1) // default the qunqtity or orders 
+  status      String       @default("pending") //the default can be set to sold 
+  OrderCode   String
+  totalPrice  Float
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  buyer       User         @relation(fields: [buyerId], references: [id])
+  listing     Listing      @relation(fields: [listingId], references: [id])
+  transaction Transaction? //one to many transactions
+}
+
+// for the transcation model
+model Transaction {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId       String   @unique @db.ObjectId
+  buyerId       String   @db.ObjectId
+  sellerId      String   @db.ObjectId
+  productId     String   @db.ObjectId
+  amount        Float
+  fee           Float // fee for my charges 
+  paymentMethod String? // paystack or stripe 
+  transactionId String // transactions id from paystack
+  paymentStatus String?  @default("pending")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  //buyer           User     @relation(fields: [buyerId] , references: [id])
+  seller        User     @relation(fields: [sellerId], references: [id])
+  order         Order    @relation(fields: [orderId], references: [id])
+  product       Product  @relation(fields: [productId], references: [id])
+}
+
+//cart model for the shoppping cart 
+model Cart {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String     @unique @db.ObjectId
+  createdAt DateTime   @default(now())
+  user      User       @relation(fields: [userId], references: [id])
+  items     CartItem[] // items in the cart 
+}
+
+model CartItem {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  cartId    String   @db.ObjectId
+  productId String   @db.ObjectId
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cart      Cart     @relation(fields: [cartId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+}
