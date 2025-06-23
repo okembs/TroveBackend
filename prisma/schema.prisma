@@ -23,9 +23,12 @@ model User {
   password      String
   stateofOrigin String
   Adress        String
+  onlineStatus  Boolean
+  location      String 
   Country       String
   faculty       String
   university    String      @default("Esut")
+  refreshToken  String 
   department    String
   role          String        @default("user")
   createdAt     DateTime      @default(now())
@@ -36,6 +39,8 @@ model User {
   products      Product[] // to map the user product 
   Cart          Cart?
 }
+
+
 
 // for the product id 
 model Product {
@@ -101,7 +106,7 @@ model Transaction {
   paymentStatus String?  @default("pending")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  //buyer           User     @relation(fields: [buyerId] , references: [id])
+ // buyer         User     @relation(fields: [buyerId] , references: [id])
   seller        User     @relation(fields: [sellerId], references: [id])
   order         Order    @relation(fields: [orderId], references: [id])
   product       Product  @relation(fields: [productId], references: [id])

@@ -1,17 +1,41 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService  } from "./prismaservice";
-import {User , Prisma , Product , Order} from '@prisma/client'
-import { PrismaClient } from "generated/prisma";
+import { Transaction as TransactionModel } from "generated/prisma";
+import { SignIn } from "src/Interace/User";
 
-interface Packs{
-    skip?:number;
-    email?:Prisma.UserWhereInput;
-    age?:any;
-    where?:Prisma.UserWhereInput;
-    orderBy?:Prisma.UserOrderByWithRelationInput
 
+interface creatUserDto{
+    price:number;
+    name:string
 }
+
+
+interface Transaction{
+    productId:string;
+    sellerId:string;
+    buyerId:string;
+    amount:number;
+    fee?:number | null;
+    paymentStatus:string;
+    orderId:string;
+    transactionId:string;
+    createdAt:Date;
+}
+
+interface CreateTransactionInput{
+    amount:number;
+    buyerId:string;
+    sellerId:string;
+    orderId:string
+}
+
+interface TransactionResponse{
+    transaction:Transaction;
+    token:string;
+}
+
 @Injectable()
+
 export class UserServices{
     constructor(private prisma:PrismaService){} 
 
@@ -19,21 +43,34 @@ export class UserServices{
         return this.prisma.user.findMany()
     }
 
-    async Login( data:Prisma.UserCreateInput):Promise<User>{
-        return this.prisma.user.create({
-            data
+    async getUserDto(user:creatUserDto){
+        const dataB = await  this.prisma.product.create({
+            data:{
+                price:user.price,
+                name:user.name
+            }
         })
+        return {dataB}
     }
 
-    async getUsers(params:Packs):Promise<User[] | null>{
-        const {skip , email, age , where, orderBy} = params;
+
+    async generateTransaction(input:CreateTransactionInput , userId:string){
+        // verify if the order exist before making any transaction 
+    
+        const order = await this.prisma.order.findUnique({
+            where:{
+                id:input.orderId
+            },
+            include:{listing:true}
+        });
+
+        if(!order){
+            throw new BadRequestException('order not found')
+        }
         
-        return this.prisma.user.findMany({
-            where,
-            orderBy,
-            skip,
+
         
-        })
     }
+   
 
 }

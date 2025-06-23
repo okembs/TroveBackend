@@ -1,6 +1,5 @@
 export interface SignIn{
-    email:string;
+ //   email?:string;
     password:string;
     username:string
-    
 }
